@@ -41,10 +41,3 @@ jobs:
           git pull origin main
           pnpm install
           pnpm run build
-          
-          # Stop existing process if running
-          sudo pm2 stop koscom-kafka-cop-wts-web || true
-          sudo pm2 delete koscom-kafka-cop-wts-web || true
-          
-          # Start new process with sudo for port 80
-          sudo pm2 start npm --name "koscom-kafka-cop-wts-web" -- run preview
