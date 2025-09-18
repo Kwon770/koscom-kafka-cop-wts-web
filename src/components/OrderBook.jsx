@@ -36,19 +36,8 @@ const OrderBook = () => {
       <div className="p-3 border-b border-gray-300">
         <div className="flex items-center justify-between">
           <h3 className="text-gray-900 font-medium">호가</h3>
-          <div className="flex items-center space-x-2">
-            <button className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded">
-              0.1
-            </button>
-            <button className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded">
-              1
-            </button>
-            <button className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded">
-              10
-            </button>
-          </div>
         </div>
-        
+
         {/* Column Headers */}
         <div className="flex justify-between text-xs text-gray-600 mt-2">
           <span>가격(KRW)</span>
@@ -56,14 +45,14 @@ const OrderBook = () => {
           <span>총액</span>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-hidden">
         {/* Sell Orders */}
         <div className="h-1/2 overflow-y-auto">
           {sellOrders.reverse().map((order, index) => (
             <div key={index} className="relative px-3 py-1 hover:bg-gray-100 cursor-pointer">
               {/* Background bar for amount visualization */}
-              <div 
+              <div
                 className="absolute right-0 top-0 h-full bg-red-500 bg-opacity-10"
                 style={{ width: `${Math.min(order.amount * 200, 100)}%` }}
               />
@@ -75,7 +64,7 @@ const OrderBook = () => {
             </div>
           ))}
         </div>
-        
+
         {/* Current Price */}
         <div className="px-3 py-2 bg-gray-100 border-y border-gray-300">
           <div className="flex items-center justify-between">
@@ -88,13 +77,13 @@ const OrderBook = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Buy Orders */}
         <div className="h-1/2 overflow-y-auto">
           {buyOrders.map((order, index) => (
             <div key={index} className="relative px-3 py-1 hover:bg-gray-100 cursor-pointer">
               {/* Background bar for amount visualization */}
-              <div 
+              <div
                 className="absolute right-0 top-0 h-full bg-blue-500 bg-opacity-10"
                 style={{ width: `${Math.min(order.amount * 200, 100)}%` }}
               />

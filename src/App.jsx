@@ -14,21 +14,21 @@ function App() {
       <Header />
       
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-60px)] max-w-screen-2xl mx-auto">
+      <div className="flex max-w-screen-2xl mx-auto">
         {/* Left Panel - 80% */}
         <div className="w-4/5 flex flex-col">
           {/* Trading Pair Info */}
-          <div className="h-32 border-b border-gray-300">
+          <div className="border-b border-gray-300 mb-2">
             <TradingPair />
           </div>
           
           {/* Chart Area */}
-          <div className="flex-1 border-b border-gray-300">
+          <div className="flex-1 border-b border-gray-300 mb-2">
             <Chart />
           </div>
           
           {/* Order Book and Trading Panel Row */}
-          <div className="flex h-96 border-b border-gray-300">
+          <div className="flex border-b border-gray-300 mb-2">
             {/* Order Book - Left */}
             <div className="flex-1 border-r border-gray-300">
               <OrderBook />
@@ -41,13 +41,13 @@ function App() {
           </div>
           
           {/* Recent Trades */}
-          <div className="h-64">
+          <div className="h-64 mb-5">
             <RecentTrades />
           </div>
         </div>
         
         {/* Right Panel - 20% - Market List */}
-        <div className="w-1/5 ml-2">
+        <div className="w-1/5 pb-5 ml-2">
           <MarketList />
         </div>
       </div>

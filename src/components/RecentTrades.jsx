@@ -65,20 +65,6 @@ const RecentTrades = () => {
           </div>
         ))}
       </div>
-      
-      {/* Summary */}
-      <div className="p-3 border-t border-gray-300 bg-gray-100">
-        <div className="text-xs space-y-1">
-          <div className="flex justify-between">
-            <span className="text-gray-600">24시간 누적거래량</span>
-            <span className="text-gray-900">15,234.23 BTC</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">24시간 누적거래대금</span>
-            <span className="text-gray-900">1,432억 KRW</span>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

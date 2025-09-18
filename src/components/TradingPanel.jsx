@@ -72,10 +72,6 @@ const TradingPanel = () => {
                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded text-gray-900 text-right text-sm focus:outline-none focus:border-blue-500"
                 placeholder="0"
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex flex-col">
-                <button className="text-gray-600 hover:text-gray-900 text-xs">▲</button>
-                <button className="text-gray-600 hover:text-gray-900 text-xs">▼</button>
-              </div>
             </div>
             <div className="flex justify-between text-xs mt-1">
               <button className="text-blue-500 hover:text-blue-400">-1%</button>
