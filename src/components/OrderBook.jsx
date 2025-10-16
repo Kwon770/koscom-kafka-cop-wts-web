@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 const OrderBook = () => {
   // Mock order book data
@@ -10,7 +10,7 @@ const OrderBook = () => {
     { price: 95150000, amount: 0.456, total: 43388400 },
     { price: 95130000, amount: 0.123, total: 11700990 },
     { price: 95125000, amount: 0.678, total: 64494750 },
-  ]
+  ];
 
   const buyOrders = [
     { price: 95100000, amount: 0.234, total: 22253400 },
@@ -20,15 +20,21 @@ const OrderBook = () => {
     { price: 94850000, amount: 0.345, total: 32723250 },
     { price: 94800000, amount: 0.234, total: 22183200 },
     { price: 94750000, amount: 0.456, total: 43206000 },
-  ]
+  ];
 
   const formatPrice = (price) => {
-    return price.toLocaleString()
-  }
+    return price.toLocaleString();
+  };
 
   const formatAmount = (amount) => {
-    return amount.toFixed(3)
-  }
+    return amount.toFixed(3);
+  };
+
+  // Calculate max amount for bar visualization
+  const maxAmount = Math.max(
+    ...sellOrders.map((order) => order.amount),
+    ...buyOrders.map((order) => order.amount),
+  );
 
   return (
     <div className="h-full bg-white flex flex-col">
@@ -39,65 +45,84 @@ const OrderBook = () => {
         </div>
 
         {/* Column Headers */}
-        <div className="flex justify-between text-xs text-gray-600 mt-2">
-          <span>가격(KRW)</span>
-          <span>수량(BTC)</span>
-          <span>총액</span>
+        <div className="flex text-xs text-gray-600 mt-2">
+          <span className="w-[30%] text-left">수량(BTC)</span>
+          <span className="w-[40%] text-center">가격(KRW)</span>
+          <span className="w-[30%] text-right">총액</span>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         {/* Sell Orders */}
-        <div className="h-1/2 overflow-y-auto">
+        <div className="overflow-y-auto">
           {sellOrders.reverse().map((order, index) => (
-            <div key={index} className="relative px-3 py-1 hover:bg-gray-100 cursor-pointer">
-              {/* Background bar for amount visualization */}
-              <div
-                className="absolute right-0 top-0 h-full bg-red-500 bg-opacity-10"
-                style={{ width: `${Math.min(order.amount * 200, 100)}%` }}
-              />
-              <div className="relative flex justify-between text-xs">
-                <span className="text-red-400 font-mono">{formatPrice(order.price)}</span>
-                <span className="text-gray-900 font-mono">{formatAmount(order.amount)}</span>
-                <span className="text-gray-600 font-mono">{(order.total / 10000).toFixed(0)}만</span>
+            <div
+              key={index}
+              className="relative pb-px h-10 hover:bg-gray-100 cursor-pointer"
+            >
+              <div className="relative flex text-xs h-full">
+                <span className="bg-blue-500 bg-opacity-10 pr-3 text-gray-600 font-mono w-[27.8%] text-right flex items-center justify-end relative">
+                  {/* Amount background bar */}
+                  <div
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 h-8 bg-blue-300 bg-opacity-30"
+                    style={{ width: `${(order.amount / maxAmount) * 100}%` }}
+                  />
+                  <span className="relative z-10">
+                    {formatAmount(order.amount)}
+                  </span>
+                </span>
+                <span className="w-[0.2%] flex items-center"></span>
+                <span className="bg-blue-500 bg-opacity-10 text-red-500 font-mono font-bold w-[24%] text-right flex items-center justify-end">
+                  {formatPrice(order.price)}
+                </span>
+                <span
+                  className="bg-blue-500 bg-opacity-10 text-red-500 font-mono w-[20%] text-center flex items-center justify-center"
+                  style={{ fontSize: "11px" }}
+                >
+                  +0.64%
+                </span>
+                <span className="w-[28%] flex items-center"></span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Current Price */}
-        <div className="px-3 py-2 bg-gray-100 border-y border-gray-300">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-red-500">95,123,000</span>
-            <div className="flex items-center space-x-1 text-red-500 text-sm">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd"></path>
-              </svg>
-              <span>+2.31%</span>
-            </div>
-          </div>
-        </div>
-
         {/* Buy Orders */}
-        <div className="h-1/2 overflow-y-auto">
-          {buyOrders.map((order, index) => (
-            <div key={index} className="relative px-3 py-1 hover:bg-gray-100 cursor-pointer">
-              {/* Background bar for amount visualization */}
-              <div
-                className="absolute right-0 top-0 h-full bg-blue-500 bg-opacity-10"
-                style={{ width: `${Math.min(order.amount * 200, 100)}%` }}
-              />
-              <div className="relative flex justify-between text-xs">
-                <span className="text-blue-400 font-mono">{formatPrice(order.price)}</span>
-                <span className="text-gray-900 font-mono">{formatAmount(order.amount)}</span>
-                <span className="text-gray-600 font-mono">{(order.total / 10000).toFixed(0)}만</span>
+        <div className="overflow-y-auto">
+          {buyOrders.reverse().map((order, index) => (
+            <div
+              key={index}
+              className="relative pb-px h-10 hover:bg-gray-100 cursor-pointer"
+            >
+              <div className="relative flex text-xs h-full">
+                <span className="w-[28%] flex items-center"></span>
+                <span className="bg-red-500 bg-opacity-10 text-blue-500 font-mono font-bold w-[24%] text-right flex items-center justify-end">
+                  {formatPrice(order.price)}
+                </span>
+                <span
+                  className="bg-red-500 bg-opacity-10 text-blue-500 font-mono w-[20%] text-center flex items-center justify-center"
+                  style={{ fontSize: "11px" }}
+                >
+                  +0.64%
+                </span>
+                <span className="w-[0.2%] flex items-center"></span>
+                <span className="bg-red-500 bg-opacity-10 pl-3 text-gray-600 font-mono w-[27.8%] text-left flex items-center justify-start relative">
+                  {/* Amount background bar */}
+                  <div
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 h-8 bg-red-300 bg-opacity-30"
+                    style={{ width: `${(order.amount / maxAmount) * 100}%` }}
+                  />
+                  <span className="relative z-10">
+                    {formatAmount(order.amount)}
+                  </span>
+                </span>
               </div>
             </div>
           ))}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OrderBook
+export default OrderBook;
