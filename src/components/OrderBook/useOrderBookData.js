@@ -143,9 +143,16 @@ export const useOrderBookData = (exchange, marketCode) => {
         return;
       }
 
-      // 현재가 업데이트
-      if (sseData.trade_price) {
-        setCurrentPrice(sseData.trade_price);
+      // tradePrice와 signedChangeRate를 이용해 시가(opening price) 역산
+      if (sseData.trade_price && sseData.signed_change_rate !== undefined) {
+        const tradePrice = sseData.trade_price;
+        const signedChangeRate = sseData.signed_change_rate;
+
+        // 시가 = 현재가 / (1 + 등락률)
+        const calculatedOpeningPrice = tradePrice / (1 + signedChangeRate);
+
+        setOpeningPrice(calculatedOpeningPrice);
+        setCurrentPrice(tradePrice);
       }
     },
     [exchange, marketCode],

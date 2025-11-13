@@ -55,7 +55,7 @@ const MarketList = () => {
         price: item.tradePrice,
         change: item.changeRate,
         changeAmount: item.changePrice,
-        volume: item.accTradePrice,
+        volume: item.accTradePrice24h,
       }));
 
       // 거래대금 내림차순 정렬

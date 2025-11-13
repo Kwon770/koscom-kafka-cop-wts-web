@@ -93,6 +93,6 @@ export function transformTickerData(sseData) {
     price: sseData.trade_price || 0,
     change: (sseData.signed_change_rate || 0) * 100, // 소수를 퍼센트로 변환
     changeAmount: sseData.signed_change_price || 0,
-    volume: sseData.acc_trade_price || 0,
+    volume: sseData.acc_trade_price_24h || 0,
   };
 }
