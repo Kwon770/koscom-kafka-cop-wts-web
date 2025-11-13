@@ -10,10 +10,10 @@ const OrderRow = React.memo(({ order, isSell, maxAmount, openingPrice, currentPr
     return amount.toFixed(3);
   };
 
-  // 시가 대비 등락률 계산
+  // 현재가 대비 등락률 계산
   const calculateChangeRate = (price) => {
-    if (!openingPrice || openingPrice === 0) return 0;
-    return ((price - openingPrice) / openingPrice) * 100;
+    if (!currentPrice || currentPrice === 0) return 0;
+    return ((price - currentPrice) / currentPrice) * 100;
   };
 
   // 등락률에 따른 색상 결정
