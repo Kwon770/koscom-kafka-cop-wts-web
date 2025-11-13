@@ -235,6 +235,9 @@ const Chart = () => {
       (error) => {
         console.error("SSE connection error:", error);
         setIsConnected(false);
+        window.dispatchEvent(new CustomEvent("sse-status-update", {
+          detail: { topic: "candel-1s", connected: false }
+        }));
         // 5초 후 재연결 시도
         setTimeout(() => {
           connectSSEStream();
@@ -243,6 +246,9 @@ const Chart = () => {
       // onConnect
       () => {
         setIsConnected(true);
+        window.dispatchEvent(new CustomEvent("sse-status-update", {
+          detail: { topic: "candel-1s", connected: true }
+        }));
       }
     );
 
@@ -292,6 +298,24 @@ const Chart = () => {
     if (candlesDataRef.current.length > 0) {
       candlestickSeries.setData(candlesDataRef.current);
     }
+
+    // 미래 시간으로 드래그 제한
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+      const logicalRange = chart.timeScale().getVisibleLogicalRange();
+      if (!logicalRange) return;
+
+      const barsInfo = candlestickSeries.barsInLogicalRange(logicalRange);
+      if (!barsInfo || barsInfo.barsBefore < 0) {
+        // 미래로 드래그하려고 할 때, 현재 시간까지만 보이도록 제한
+        const dataLength = candlesDataRef.current.length;
+        if (dataLength > 0) {
+          chart.timeScale().setVisibleLogicalRange({
+            from: Math.max(0, logicalRange.from),
+            to: dataLength - 1,
+          });
+        }
+      }
+    });
 
     const handleResize = () => {
       if (chartContainerRef.current) {
@@ -366,17 +390,6 @@ const Chart = () => {
                 {period}
               </button>
             ))}
-          </div>
-          <div className="flex items-center space-x-4 text-xs">
-            <span>
-              연결 상태:{" "}
-              <span
-                className={isConnected ? "text-green-600" : "text-red-600"}
-              >
-                {isConnected ? "🟢 연결됨" : "🔴 연결 끊김"}
-              </span>
-            </span>
-            <span>데이터: {candlesDataRef.current.length}개</span>
           </div>
         </div>
       </div>

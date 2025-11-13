@@ -13,19 +13,31 @@ const MarketList = () => {
   const eventSourceRef = useRef(null);
   const exchange = import.meta.env.VITE_EXCHANGE || "UPBIT";
 
+  // 티커 코드를 한국어 이름으로 매핑
+  const tickerNameMap = {
+    "KRW/XRP": "리플",
+    "KRW/BTC": "비트코인",
+    "KRW/ETH": "이더리움",
+    "KRW/SOL": "솔라나",
+    "KRW/DOGE": "도지코인",
+    "KRW/ADA": "에이다",
+    "KRW/SUI": "수이",
+    "KRW/LINK": "체인링크",
+    "KRW/ZKC": "바운드리스",
+  };
+
+  const getTickerName = (ticker) => {
+    return tickerNameMap[ticker] || ticker;
+  };
+
   const formatPrice = (price) => {
     return price.toLocaleString();
   };
 
   const formatVolume = (volume) => {
-    if (volume >= 1000000000000) {
-      return `${(volume / 1000000000000).toFixed(1)}조`;
-    } else if (volume >= 100000000) {
-      return `${(volume / 100000000).toFixed(0)}억`;
-    } else if (volume >= 10000) {
-      return `${(volume / 10000).toFixed(0)}만`;
-    }
-    return volume.toLocaleString();
+    // 백만 단위로 변환 (1,000,000 = 1백만)
+    const volumeInMillions = volume / 1000000;
+    return `${volumeInMillions.toLocaleString(undefined, { maximumFractionDigits: 0 })}백만`;
   };
 
   // 초기 데이터 로드
@@ -45,6 +57,9 @@ const MarketList = () => {
         changeAmount: item.changePrice,
         volume: item.accTradePrice,
       }));
+
+      // 거래대금 내림차순 정렬
+      transformedMarkets.sort((a, b) => b.volume - a.volume);
 
       setMarkets(transformedMarkets);
     } catch (err) {
@@ -119,12 +134,18 @@ const MarketList = () => {
       (error) => {
         console.error("SSE connection error:", error);
         setIsConnected(false);
+        window.dispatchEvent(new CustomEvent("sse-status-update", {
+          detail: { topic: "ticker-basic", connected: false }
+        }));
         setTimeout(() => {
           connectSSEStream();
         }, 5000);
       },
       () => {
         setIsConnected(true);
+        window.dispatchEvent(new CustomEvent("sse-status-update", {
+          detail: { topic: "ticker-basic", connected: true }
+        }));
       },
     );
 
@@ -250,10 +271,10 @@ const MarketList = () => {
       {/* Column Headers */}
       <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center text-xs text-gray-600">
-          <span className="w-20">코인</span>
+          <span className="w-16">코인</span>
           <span className="flex-1 text-right pr-4">현재가</span>
           <span className="w-16 text-right">등락률</span>
-          <span className="w-16 text-right">거래대금</span>
+          <span className="w-24 text-right">거래대금</span>
         </div>
       </div>
 
@@ -271,12 +292,12 @@ const MarketList = () => {
               className="px-3 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors"
             >
               <div className="flex items-start">
-                <div className="flex items-center space-x-3 w-20">
+                <div className="flex items-center space-x-3 w-16">
                   <div className="flex flex-col">
-                    <span className="text-gray-900 text-sm font-semibold">
-                      {market.name}
+                    <span className="text-gray-900 text-xs font-semibold">
+                      {getTickerName(market.ticker)}
                     </span>
-                    <span className="text-gray-500 text-xs">
+                    <span className="text-gray-500 text-[10px]">
                       {market.ticker}
                     </span>
                   </div>
@@ -331,7 +352,7 @@ const MarketList = () => {
                   </div>
                 </div>
 
-                <div className="w-16 text-right pt-0.5">
+                <div className="w-24 text-right pt-0.5">
                   <div className="text-xs font-medium text-gray-700">
                     {formatVolume(market.volume)}
                   </div>

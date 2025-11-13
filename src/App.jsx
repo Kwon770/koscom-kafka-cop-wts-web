@@ -6,6 +6,7 @@ import Chart from "./components/Chart";
 import TradingPanel from "./components/TradingPanel";
 import RecentTrades from "./components/RecentTrades";
 import MarketList from "./components/MarketList";
+import SseStatusFooter from "./components/SseStatusFooter";
 
 function App() {
   return (
@@ -53,6 +54,9 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* SSE Status Footer */}
+      <SseStatusFooter />
     </div>
   );
 }
