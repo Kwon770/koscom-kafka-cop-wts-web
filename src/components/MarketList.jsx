@@ -35,6 +35,10 @@ const MarketList = () => {
   };
 
   const formatVolume = (volume) => {
+    // volume이 유효하지 않으면 빈 문자열 반환
+    if (!volume || isNaN(volume) || volume === 0) {
+      return "";
+    }
     // 백만 단위로 변환 (1,000,000 = 1백만)
     const volumeInMillions = volume / 1000000;
     return `${volumeInMillions.toLocaleString(undefined, { maximumFractionDigits: 0 })}백만`;
@@ -55,7 +59,7 @@ const MarketList = () => {
         price: item.tradePrice,
         change: item.changeRate,
         changeAmount: item.changePrice,
-        volume: item.accTradePrice24h,
+        volume: item.accTradePrice24h || 0,
       }));
 
       // 거래대금 내림차순 정렬
