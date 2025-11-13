@@ -1,77 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { fetchMarketList, connectTickerSSE, transformTickerData } from "../services/marketService";
 
 const MarketList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("KRW");
   const [priceAnimations, setPriceAnimations] = useState({});
+  const [markets, setMarkets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Mock market data - now as state
-  const [markets, setMarkets] = useState([
-    {
-      ticker: "BTC/KRW",
-      name: "비트코인",
-      price: 95123000,
-      change: 2.31,
-      changeAmount: 2153000,
-      volume: 125000000000,
-    },
-    {
-      ticker: "ETH/KRW",
-      name: "이더리움",
-      price: 3420000,
-      change: -1.45,
-      changeAmount: -50000,
-      volume: 45000000000,
-    },
-    {
-      ticker: "XRP/KRW",
-      name: "리플",
-      price: 890,
-      change: 5.23,
-      changeAmount: 44,
-      volume: 8500000000,
-    },
-    {
-      ticker: "ADA/KRW",
-      name: "에이다",
-      price: 567,
-      change: -2.11,
-      changeAmount: -12,
-      volume: 2300000000,
-    },
-    {
-      ticker: "DOT/KRW",
-      name: "폴카닷",
-      price: 12340,
-      change: 3.78,
-      changeAmount: 450,
-      volume: 5600000000,
-    },
-    {
-      ticker: "LINK/KRW",
-      name: "체인링크",
-      price: 23450,
-      change: -0.89,
-      changeAmount: -210,
-      volume: 3200000000,
-    },
-    {
-      ticker: "LTC/KRW",
-      name: "라이트코인",
-      price: 156000,
-      change: 1.23,
-      changeAmount: 1900,
-      volume: 12000000000,
-    },
-    {
-      ticker: "BCH/KRW",
-      name: "비트코인캐시",
-      price: 234000,
-      change: -3.45,
-      changeAmount: -8345,
-      volume: 7800000000,
-    },
-  ]);
+  const eventSourceRef = useRef(null);
+  const exchange = import.meta.env.VITE_EXCHANGE || "UPBIT";
 
   const formatPrice = (price) => {
     return price.toLocaleString();
@@ -88,71 +28,171 @@ const MarketList = () => {
     return volume.toLocaleString();
   };
 
+  // 초기 데이터 로드
+  const loadMarketList = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const results = await fetchMarketList(exchange);
+
+      // API 응답을 UI 형식으로 변환
+      const transformedMarkets = results.map((item) => ({
+        ticker: item.tickerCode,
+        name: item.tickerName,
+        price: item.tradePrice,
+        change: item.changeRate,
+        changeAmount: item.changePrice,
+        volume: item.accTradePrice,
+      }));
+
+      setMarkets(transformedMarkets);
+    } catch (err) {
+      setError(err);
+      console.error("Failed to load market list:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [exchange]);
+
   // Price animation handler
-  const triggerPriceAnimation = (ticker) => {
+  const triggerPriceAnimation = useCallback((ticker) => {
     setPriceAnimations((prev) => ({ ...prev, [ticker]: true }));
     setTimeout(() => {
       setPriceAnimations((prev) => ({ ...prev, [ticker]: false }));
-    }, 100); // 0.1초 후 border 제거
-  };
+    }, 100);
+  }, []);
 
-  // Random market data updater
-  const updateRandomMarket = () => {
-    setMarkets((prevMarkets) => {
-      // Random chance to update (30% probability)
-      if (Math.random() > 0.4) return prevMarkets;
+  // SSE 데이터 업데이트
+  const updateMarketFromSSE = useCallback(
+    (sseData) => {
+      if (!sseData) return;
 
-      const updatedMarkets = [...prevMarkets];
-      const randomIndex = Math.floor(Math.random() * updatedMarkets.length);
-      const market = { ...updatedMarkets[randomIndex] };
+      // exchange 필터링
+      const sseExchange = sseData.exchange?.toUpperCase();
+      const currentExchange = exchange.toUpperCase();
 
-      // Random price change (-5% to +5%)
-      const priceChangePercent = (Math.random() - 0.5) * 0.1; // -5% to +5%
-      const oldPrice = market.price;
-      const newPrice = Math.max(
-        1,
-        Math.round(oldPrice * (1 + priceChangePercent)),
-      );
-
-      // Only update if price actually changed
-      if (newPrice !== oldPrice) {
-        // Calculate change amount and percentage
-        const changeAmount = newPrice - oldPrice;
-        const changePercent = ((newPrice - oldPrice) / oldPrice) * 100;
-
-        // Update volume randomly (-10% to +10%)
-        const volumeChange = (Math.random() - 0.5) * 0.2;
-        const newVolume = Math.max(
-          1000000,
-          Math.round(market.volume * (1 + volumeChange)),
-        );
-
-        market.price = newPrice;
-        market.change = changePercent;
-        market.changeAmount = changeAmount;
-        market.volume = newVolume;
-
-        // Trigger price animation
-        triggerPriceAnimation(market.ticker);
+      if (sseExchange !== currentExchange) {
+        return;
       }
 
-      updatedMarkets[randomIndex] = market;
-      return updatedMarkets;
-    });
-  };
+      const transformed = transformTickerData(sseData);
+      if (!transformed) return;
 
-  // Start random updates
+      setMarkets((prevMarkets) => {
+        const index = prevMarkets.findIndex((m) => m.ticker === transformed.ticker);
+        if (index === -1) return prevMarkets;
+
+        const updatedMarkets = [...prevMarkets];
+        const oldPrice = updatedMarkets[index].price;
+
+        updatedMarkets[index] = {
+          ...updatedMarkets[index],
+          price: transformed.price,
+          change: transformed.change,
+          changeAmount: transformed.changeAmount,
+          volume: transformed.volume,
+        };
+
+        // 가격이 변경되었으면 애니메이션 트리거
+        if (oldPrice !== transformed.price) {
+          triggerPriceAnimation(transformed.ticker);
+        }
+
+        return updatedMarkets;
+      });
+    },
+    [exchange, triggerPriceAnimation],
+  );
+
+  // SSE 연결
+  const connectSSEStream = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const eventSource = connectTickerSSE(
+      "ticker-basic",
+      (data) => {
+        updateMarketFromSSE(data);
+      },
+      (error) => {
+        console.error("SSE connection error:", error);
+        setIsConnected(false);
+        setTimeout(() => {
+          connectSSEStream();
+        }, 5000);
+      },
+      () => {
+        setIsConnected(true);
+      },
+    );
+
+    eventSourceRef.current = eventSource;
+  }, [updateMarketFromSSE]);
+
   useEffect(() => {
-    const startRandomUpdates = () => {
-      const randomDelay = 100; // 0.1초 ~ 3초
-      setTimeout(() => {
-        updateRandomMarket();
-        startRandomUpdates(); // 재귀적으로 다음 업데이트 스케줄링
-      }, randomDelay);
-    };
+    loadMarketList().then(() => {
+      connectSSEStream();
+    });
 
-    startRandomUpdates();
-  }, []);
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [loadMarketList, connectSSEStream]);
+
+  if (isLoading) {
+    return (
+      <div className="h-full bg-white flex flex-col">
+        <div className="p-3 border-b border-gray-200">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text" placeholder="코인 검색" value="" disabled className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 bg-gray-50" />
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
+          마켓 목록을 불러오는 중입니다...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full bg-white flex flex-col">
+        <div className="p-3 border-b border-gray-200">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text" placeholder="코인 검색" value="" disabled className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 bg-gray-50" />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center text-sm text-red-600 space-y-2 px-4">
+          <span>마켓 목록을 불러오지 못했습니다.</span>
+          {error?.message && (
+            <span className="text-xs text-gray-500 text-center">{error.message}</span>
+          )}
+          <button
+            type="button"
+            onClick={loadMarketList}
+            className="px-3 py-1 border border-red-300 rounded hover:bg-red-50 text-red-600 text-xs"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-white flex flex-col">
